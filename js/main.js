@@ -8,31 +8,82 @@ const thumbnailScale = 0.3;
 // Set worker for PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
+// ID del archivo en Google Drive (extrae del link compartido)
+const GOOGLE_DRIVE_FILE_ID = '1pYaIsEbq7przqTOIopdF1Ek4nJLg1PBW';
+const LOCAL_PDF_PATH = 'uploads/boletin.pdf';
+
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
-    // URL del PDF desde Google Drive (descarga directa)
-    const pdfUrl = 'https://drive.google.com/file/d/1pYaIsEbq7przqTOIopdF1Ek4nJLg1PBW/view?usp=sharing';
+    showLoadingState();
     
     try {
-        await loadPDF(pdfUrl);
+        // Intenta primero con URL de Google Drive optimizada
+        const googleDriveUrl = `https://drive.google.com/uc?id=${GOOGLE_DRIVE_FILE_ID}&export=pdf`;
+        await loadPDF(googleDriveUrl);
+        hideLoadingState();
         renderPage(currentPage);
         generateThumbnails();
         setupEventListeners();
     } catch (error) {
-        console.error('Error loading PDF:', error);
-        // Intentar con la URL alternativa sin CORS
+        console.warn('Error loading from Google Drive, trying local file...', error);
+        
         try {
-            const altUrl = 'https://drive.google.com/uc?id=1pYaIsEbq7przqTOIopdF1Ek4nJLg1PBW&export=download';
-            await loadPDF(altUrl);
+            // Fallback a archivo local
+            await loadPDF(LOCAL_PDF_PATH);
+            hideLoadingState();
             renderPage(currentPage);
             generateThumbnails();
             setupEventListeners();
-        } catch (altError) {
-            console.error('Error with alternate URL:', altError);
-            document.getElementById('flipbook').innerHTML = '<p style="color: red;">Error al cargar el PDF desde Google Drive. Por favor, intenta más tarde o contacta al administrador.</p>';
+        } catch (localError) {
+            console.error('Error loading local PDF:', localError);
+            
+            try {
+                // Segundo intento con URL proxy alternativa de Google Drive
+                const proxyUrl = `https://drive.google.com/uc?id=${GOOGLE_DRIVE_FILE_ID}&export=download`;
+                await loadPDF(proxyUrl);
+                hideLoadingState();
+                renderPage(currentPage);
+                generateThumbnails();
+                setupEventListeners();
+            } catch (proxyError) {
+                hideLoadingState();
+                console.error('Error with all PDF sources:', proxyError);
+                showErrorMessage(
+                    'Error al cargar el PDF. Por favor:' +
+                    '<br>1. Verifica que el archivo exista en Google Drive o en la carpeta uploads/' +
+                    '<br>2. Si usas Google Drive, asegúrate de que sea accesible públicamente' +
+                    '<br>3. Intenta abrir en otro navegador' +
+                    '<br><br>Para solucionar: coloca tu PDF en la carpeta "uploads/boletin.pdf" y recarga la página'
+                );
+            }
         }
     }
 });
+
+// Show loading indicator
+function showLoadingState() {
+    const flipbook = document.getElementById('flipbook');
+    flipbook.innerHTML = `
+        <div class="loading-container">
+            <div class="spinner"></div>
+            <p>Cargando PDF...</p>
+        </div>
+    `;
+}
+
+// Hide loading indicator
+function hideLoadingState() {
+    const loader = document.querySelector('.loading-container');
+    if (loader) {
+        loader.remove();
+    }
+}
+
+// Show error message
+function showErrorMessage(message) {
+    const flipbook = document.getElementById('flipbook');
+    flipbook.innerHTML = `<div class="error-message">${message}</div>`;
+}
 
 // Load PDF document
 async function loadPDF(url) {
@@ -41,7 +92,13 @@ async function loadPDF(url) {
     }
     
     try {
-        pdfDoc = await pdfjsLib.getDocument(url).promise;
+        pdfDoc = await pdfjsLib.getDocument({
+            url: url,
+            withCredentials: false,
+            cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
+            cMapPacked: true
+        }).promise;
+        
         totalPages = pdfDoc.numPages;
         updatePageInfo();
     } catch (error) {
