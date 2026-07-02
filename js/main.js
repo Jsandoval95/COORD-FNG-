@@ -8,8 +8,10 @@ const thumbnailScale = 0.3;
 // Set worker for PDF.js
 pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.worker.min.js';
 
-// ID del archivo en Google Drive (extrae del link compartido)
-const GOOGLE_DRIVE_FILE_ID = '1pYaIsEbq7przqTOIopdF1Ek4nJLg1PBW';
+// URL de OneDrive convertida a descarga directa
+const ONEDRIVE_URL = 'https://1drv.ms/b/c/5323a698abf18282/IQRvGr3Yt8qZFiVcQvpkPGk0JAP1IlVVuEBVQzNl4wJ6NU?download=1';
+
+// Ruta local como fallback
 const LOCAL_PDF_PATH = 'uploads/boletin.pdf';
 
 // Initialize on page load
@@ -17,18 +19,19 @@ document.addEventListener('DOMContentLoaded', async () => {
     showLoadingState();
     
     try {
-        // Intenta primero con URL de Google Drive optimizada
-        const googleDriveUrl = `https://drive.google.com/uc?id=${GOOGLE_DRIVE_FILE_ID}&export=pdf`;
-        await loadPDF(googleDriveUrl);
+        // Intenta primero con OneDrive
+        console.log('Intentando cargar desde OneDrive...');
+        await loadPDF(ONEDRIVE_URL);
         hideLoadingState();
         renderPage(currentPage);
         generateThumbnails();
         setupEventListeners();
-    } catch (error) {
-        console.warn('Error loading from Google Drive, trying local file...', error);
+    } catch (oneDriveError) {
+        console.warn('Error loading from OneDrive, trying local file...', oneDriveError);
         
         try {
             // Fallback a archivo local
+            console.log('Intentando cargar archivo local...');
             await loadPDF(LOCAL_PDF_PATH);
             hideLoadingState();
             renderPage(currentPage);
@@ -36,26 +39,20 @@ document.addEventListener('DOMContentLoaded', async () => {
             setupEventListeners();
         } catch (localError) {
             console.error('Error loading local PDF:', localError);
-            
-            try {
-                // Segundo intento con URL proxy alternativa de Google Drive
-                const proxyUrl = `https://drive.google.com/uc?id=${GOOGLE_DRIVE_FILE_ID}&export=download`;
-                await loadPDF(proxyUrl);
-                hideLoadingState();
-                renderPage(currentPage);
-                generateThumbnails();
-                setupEventListeners();
-            } catch (proxyError) {
-                hideLoadingState();
-                console.error('Error with all PDF sources:', proxyError);
-                showErrorMessage(
-                    'Error al cargar el PDF. Por favor:' +
-                    '<br>1. Verifica que el archivo exista en Google Drive o en la carpeta uploads/' +
-                    '<br>2. Si usas Google Drive, asegúrate de que sea accesible públicamente' +
-                    '<br>3. Intenta abrir en otro navegador' +
-                    '<br><br>Para solucionar: coloca tu PDF en la carpeta "uploads/boletin.pdf" y recarga la página'
-                );
-            }
+            hideLoadingState();
+            showErrorMessage(
+                '<strong>⚠️ Error al cargar el PDF</strong>' +
+                '<br><br>Por favor intenta una de las siguientes soluciones:' +
+                '<br><br>1. <strong>Opción Local (Recomendada):</strong>' +
+                '<br>   - Descarga tu PDF' +
+                '<br>   - Crea una carpeta "uploads" en el proyecto' +
+                '<br>   - Coloca el PDF como "uploads/boletin.pdf"' +
+                '<br>   - Recarga la página' +
+                '<br><br>2. <strong>Opción OneDrive:</strong>' +
+                '<br>   - Abre el archivo en OneDrive' +
+                '<br>   - Copia el link compartido' +
+                '<br>   - Asegúrate que sea públicamente accesible'
+            );
         }
     }
 });
@@ -92,8 +89,11 @@ async function loadPDF(url) {
     }
     
     try {
+        // Añade parámetro para evitar CORS
+        const urlWithParams = url.includes('?') ? `${url}&nocache=${Date.now()}` : `${url}?nocache=${Date.now()}`;
+        
         pdfDoc = await pdfjsLib.getDocument({
-            url: url,
+            url: urlWithParams,
             withCredentials: false,
             cMapUrl: 'https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/cmaps/',
             cMapPacked: true
@@ -101,6 +101,7 @@ async function loadPDF(url) {
         
         totalPages = pdfDoc.numPages;
         updatePageInfo();
+        console.log(`PDF cargado exitosamente. Total de páginas: ${totalPages}`);
     } catch (error) {
         throw new Error(`No se pudo cargar el PDF: ${error.message}`);
     }
