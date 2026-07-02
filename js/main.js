@@ -11,7 +11,7 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
     // URL del PDF desde Google Drive (descarga directa)
-    const pdfUrl = 'https://drive.google.com/uc?export=download&id=1pYaIsEbq7przqTOIopdF1Ek4nJLg1PBW';
+    const pdfUrl = 'https://drive.google.com/file/d/1pYaIsEbq7przqTOIopdF1Ek4nJLg1PBW/view?usp=sharing';
     
     try {
         await loadPDF(pdfUrl);
