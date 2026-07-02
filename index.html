@@ -1,0 +1,39 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>FNG Boletín - Flipbook</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+    <div class="container">
+        <header>
+            <h1>FNG Boletín</h1>
+            <p>Visualiza nuestras publicaciones</p>
+        </header>
+
+        <div class="flipbook-wrapper">
+            <div id="flipbook">
+                <!-- Las páginas se cargarán aquí -->
+            </div>
+        </div>
+
+        <div class="controls">
+            <button id="prevBtn" class="btn">← Anterior</button>
+            <span id="pageInfo" class="page-info">Página 1 de 10</span>
+            <button id="nextBtn" class="btn">Siguiente →</button>
+        </div>
+
+        <div class="thumbnails">
+            <h3>Miniaturas</h3>
+            <div id="thumbnailContainer" class="thumbnail-grid">
+                <!-- Las miniaturas se cargarán aquí -->
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/pdf.js/3.11.174/pdf.min.js"></script>
+    <script src="js/main.js"></script>
+</body>
+</html>
