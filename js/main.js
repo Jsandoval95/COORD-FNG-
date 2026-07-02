@@ -20,7 +20,17 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupEventListeners();
     } catch (error) {
         console.error('Error loading PDF:', error);
-        document.getElementById('flipbook').innerHTML = '<p style="color: red;">Error al cargar el PDF desde Google Drive. Verifica tu conexión a Internet.</p>';
+        // Intentar con la URL alternativa sin CORS
+        try {
+            const altUrl = 'https://drive.google.com/uc?id=1pYaIsEbq7przqTOIopdF1Ek4nJLg1PBW&export=download';
+            await loadPDF(altUrl);
+            renderPage(currentPage);
+            generateThumbnails();
+            setupEventListeners();
+        } catch (altError) {
+            console.error('Error with alternate URL:', altError);
+            document.getElementById('flipbook').innerHTML = '<p style="color: red;">Error al cargar el PDF desde Google Drive. Por favor, intenta más tarde o contacta al administrador.</p>';
+        }
     }
 });
 
