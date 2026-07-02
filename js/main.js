@@ -10,7 +10,8 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = 'https://cdnjs.cloudflare.com/ajax/libs
 
 // Initialize on page load
 document.addEventListener('DOMContentLoaded', async () => {
-    const pdfUrl = 'uploads/boletin.pdf'; // Cambia esto a tu archivo PDF
+    // URL del PDF desde Google Drive (convertida a descarga directa)
+    const pdfUrl = 'https://drive.google.com/uc?export=download&id=1pYaIsEbq7przqTOIopdF1Ek4nJLg1PBW';
     
     try {
         await loadPDF(pdfUrl);
@@ -19,7 +20,7 @@ document.addEventListener('DOMContentLoaded', async () => {
         setupEventListeners();
     } catch (error) {
         console.error('Error loading PDF:', error);
-        document.getElementById('flipbook').innerHTML = '<p style="color: red;">Error al cargar el PDF. Por favor, verifica que el archivo existe en uploads/boletin.pdf</p>';
+        document.getElementById('flipbook').innerHTML = '<p style="color: red;">Error al cargar el PDF. Verifica tu conexión a Internet.</p>';
     }
 });
 
